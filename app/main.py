@@ -279,7 +279,8 @@ def tasks() -> list[dict[str, object]]:
 
 
 @app.post("/reset", response_model=ResetResponse)
-def reset(payload: ResetPayload) -> ResetResponse:
+def reset(payload: ResetPayload | None = None) -> ResetResponse:
+    payload = payload or ResetPayload()
     return env.reset(task_name=payload.task, seed=payload.seed)
 
 
