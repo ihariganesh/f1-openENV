@@ -1,0 +1,92 @@
+[EVAL_RUN] task=f1-sprint-dry seed=7
+[EPISODE_START] task=f1-sprint-dry seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=7 step=10 lap=11/20 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=7 step=20 lap=21/20 reward=0.5920373736799158
+[EPISODE_END] task=f1-sprint-dry seed=7 done=True steps=20 score=1.0000
+[EVAL_RUN] task=f1-sprint-dry seed=13
+[EPISODE_START] task=f1-sprint-dry seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=13 step=10 lap=11/20 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=13 step=20 lap=21/20 reward=0.5920373736799158
+[EPISODE_END] task=f1-sprint-dry seed=13 done=True steps=20 score=1.0000
+[EVAL_RUN] task=f1-feature-safetycar seed=7
+[EPISODE_START] task=f1-feature-safetycar seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=10 lap=11/50 reward=0.09721847150958683
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=20 lap=21/50 reward=0.09247367069098383
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=30 lap=31/50 reward=0.09783140388064569
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=40 lap=41/50 reward=0.09831230542356219
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=50 lap=51/50 reward=0.5926927236211957
+[EPISODE_END] task=f1-feature-safetycar seed=7 done=True steps=50 score=0.7543
+[EVAL_RUN] task=f1-feature-safetycar seed=13
+[EPISODE_START] task=f1-feature-safetycar seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=10 lap=11/50 reward=0.09721847150958683
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=20 lap=21/50 reward=0.09247367069098383
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=30 lap=31/50 reward=0.09783140388064569
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=40 lap=41/50 reward=0.09831230542356219
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=50 lap=51/50 reward=0.5926927236211957
+[EPISODE_END] task=f1-feature-safetycar seed=13 done=True steps=50 score=0.7543
+[EVAL_RUN] task=f1-chaos-weather seed=7
+[EPISODE_START] task=f1-chaos-weather seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=10 lap=11/60 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=20 lap=21/60 reward=-0.4079626263200841
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=30 lap=31/60 reward=-0.40896038697184495
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=40 lap=41/60 reward=-0.42684327001833694
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=50 lap=51/60 reward=-0.45583212240240284
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=60 lap=61/60 reward=-0.4886993388185347
+[EPISODE_END] task=f1-chaos-weather seed=7 done=True steps=60 score=0.0000
+[EVAL_RUN] task=f1-chaos-weather seed=13
+[EPISODE_START] task=f1-chaos-weather seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=10 lap=11/60 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=20 lap=21/60 reward=-0.4079626263200841
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=30 lap=31/60 reward=-0.40896038697184495
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=40 lap=41/60 reward=-0.42684327001833694
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=50 lap=51/60 reward=-0.45583212240240284
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=60 lap=61/60 reward=-0.4886993388185347
+[EPISODE_END] task=f1-chaos-weather seed=13 done=True steps=60 score=0.0000
+[TRAIN] trial=1/4 avg_grader_score=0.5848 params={'sprint_pit_lap': 12, 'sc_window_start': 18, 'sc_window_end': 21, 'late_wear_threshold': 0.82, 'rain_forecast_threshold': 0.65, 'wet_track_threshold': 0.35, 'dry_back_threshold': 0.1}
+[EVAL_RUN] task=f1-sprint-dry seed=7
+[EPISODE_START] task=f1-sprint-dry seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=7 step=10 lap=11/20 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=7 step=20 lap=21/20 reward=0.5920373736799158
+[EPISODE_END] task=f1-sprint-dry seed=7 done=True steps=20 score=1.0000
+[EVAL_RUN] task=f1-sprint-dry seed=13
+[EPISODE_START] task=f1-sprint-dry seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=13 step=10 lap=11/20 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=13 step=20 lap=21/20 reward=0.5920373736799158
+[EPISODE_END] task=f1-sprint-dry seed=13 done=True steps=20 score=1.0000
+[EVAL_RUN] task=f1-feature-safetycar seed=7
+[EPISODE_START] task=f1-feature-safetycar seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=10 lap=11/50 reward=0.09721847150958683
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=20 lap=21/50 reward=0.09247367069098383
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=30 lap=31/50 reward=0.09783140388064569
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=40 lap=41/50 reward=0.09831230542356219
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=50 lap=51/50 reward=0.5926927236211957
+[EPISODE_END] task=f1-feature-safetycar seed=7 done=True steps=50 score=0.7543
+[EVAL_RUN] task=f1-feature-safetycar seed=13
+[EPISODE_START] task=f1-feature-safetycar seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=10 lap=11/50 reward=0.09721847150958683
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=20 lap=21/50 reward=0.09247367069098383
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=30 lap=31/50 reward=0.09783140388064569
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=40 lap=41/50 reward=0.09831230542356219
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=50 lap=51/50 reward=0.5926927236211957
+[EPISODE_END] task=f1-feature-safetycar seed=13 done=True steps=50 score=0.7543
+[EVAL_RUN] task=f1-chaos-weather seed=7
+[EPISODE_START] task=f1-chaos-weather seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=10 lap=11/60 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=20 lap=21/60 reward=-0.4079626263200841
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=30 lap=31/60 reward=-0.40896038697184495
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=40 lap=41/60 reward=-0.42684327001833694
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=50 lap=51/60 reward=-0.45583212240240284
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=60 lap=61/60 reward=-0.4886993388185347
+[EPISODE_END] task=f1-chaos-weather seed=7 done=True steps=60 score=0.0000
+[EVAL_RUN] task=f1-chaos-weather seed=13
+[EPISODE_START] task=f1-chaos-weather seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=10 lap=11/60 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=20 lap=21/60 reward=-0.4079626263200841
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=30 lap=31/60 reward=-0.40896038697184495
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=40 lap=41/60 reward=-0.42684327001833694
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=50 lap=51/60 reward=-0.45583212240240284
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=60 lap=61/60 reward=-0.4886993388185347
+[EPISODE_END] task=f1-chaos-weather seed=13 done=True steps=60 score=0.0000
+[TRAIN] trial=2/4 avg_grader_score=0.5848 params={'sprint_pit_lap': 12, 'sc_window_start': 18, 'sc_window_end': 21, 'late_wear_threshold': 0.86, 'rain_forecast_threshold': 0.45, 'wet_track_threshold': 0.55, 'dry_back_threshold': 0.15}
+[EVAL_RUN] task=f1-sprint-dry seed=7
+[EPISODE_START] task=f1-sprint-dry seed=7 env=http://localhost:8000

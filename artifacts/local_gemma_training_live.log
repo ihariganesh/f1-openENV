@@ -1,0 +1,125 @@
+[EVAL_RUN] task=f1-sprint-dry seed=7
+[EPISODE_START] task=f1-sprint-dry seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=7 step=10 lap=11/20 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=7 step=20 lap=21/20 reward=0.5920373736799158
+[EPISODE_END] task=f1-sprint-dry seed=7 done=True steps=20 score=1.0000
+[EVAL_RUN] task=f1-sprint-dry seed=13
+[EPISODE_START] task=f1-sprint-dry seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=13 step=10 lap=11/20 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=13 step=20 lap=21/20 reward=0.5920373736799158
+[EPISODE_END] task=f1-sprint-dry seed=13 done=True steps=20 score=1.0000
+[EVAL_RUN] task=f1-feature-safetycar seed=7
+[EPISODE_START] task=f1-feature-safetycar seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=10 lap=11/50 reward=0.09721847150958683
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=20 lap=21/50 reward=0.09247367069098383
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=30 lap=31/50 reward=0.09783140388064569
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=40 lap=41/50 reward=0.09831230542356219
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=7 step=50 lap=51/50 reward=0.5926927236211957
+[EPISODE_END] task=f1-feature-safetycar seed=7 done=True steps=50 score=0.7543
+[EVAL_RUN] task=f1-feature-safetycar seed=13
+[EPISODE_START] task=f1-feature-safetycar seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=10 lap=11/50 reward=0.09721847150958683
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=20 lap=21/50 reward=0.09247367069098383
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=30 lap=31/50 reward=0.09783140388064569
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=40 lap=41/50 reward=0.09831230542356219
+[EPISODE_PROGRESS] task=f1-feature-safetycar seed=13 step=50 lap=51/50 reward=0.5926927236211957
+[EPISODE_END] task=f1-feature-safetycar seed=13 done=True steps=50 score=0.7543
+[EVAL_RUN] task=f1-chaos-weather seed=7
+[EPISODE_START] task=f1-chaos-weather seed=7 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=10 lap=11/60 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=20 lap=21/60 reward=-0.4079626263200841
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=30 lap=31/60 reward=-0.40896038697184495
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=40 lap=41/60 reward=-0.42684327001833694
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=50 lap=51/60 reward=-0.45583212240240284
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=7 step=60 lap=61/60 reward=-0.4886993388185347
+[EPISODE_END] task=f1-chaos-weather seed=7 done=True steps=60 score=0.0000
+[EVAL_RUN] task=f1-chaos-weather seed=13
+[EPISODE_START] task=f1-chaos-weather seed=13 env=http://localhost:8000
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=10 lap=11/60 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=20 lap=21/60 reward=-0.4079626263200841
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=30 lap=31/60 reward=-0.40896038697184495
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=40 lap=41/60 reward=-0.42684327001833694
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=50 lap=51/60 reward=-0.45583212240240284
+[EPISODE_PROGRESS] task=f1-chaos-weather seed=13 step=60 lap=61/60 reward=-0.4886993388185347
+[EPISODE_END] task=f1-chaos-weather seed=13 done=True steps=60 score=0.0000
+[TRAIN] trial=1/1 avg_grader_score=0.5848 params={'sprint_pit_lap': 9, 'sc_window_start': 18, 'sc_window_end': 20, 'late_wear_threshold': 0.82, 'rain_forecast_threshold': 0.65, 'wet_track_threshold': 0.55, 'dry_back_threshold': 0.2}
+[EVAL_RUN] task=f1-sprint-dry seed=7
+[EPISODE_START] task=f1-sprint-dry seed=7 env=https://ihariganesh-f1-race-stratergy.hf.space
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=7 step=10 lap=11/20 reward=0.09786331756646552
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=7 step=20 lap=21/20 reward=0.5920373736799158
+[EPISODE_END] task=f1-sprint-dry seed=7 done=True steps=20 score=1.0000
+[EVAL_RUN] task=f1-sprint-dry seed=13
+[EPISODE_START] task=f1-sprint-dry seed=13 env=https://ihariganesh-f1-race-stratergy.hf.space
+[EPISODE_PROGRESS] task=f1-sprint-dry seed=13 step=10 lap=11/20 reward=0.09786331756646552
+Traceback (most recent call last):
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_sync/connection.py", line 103, in handle_request
+    return self._connection.handle_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 136, in handle_request
+    raise exc
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 106, in handle_request
+    ) = self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 177, in _receive_response_headers
+    event = self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 217, in _receive_event
+    data = self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_backends/sync.py", line 126, in read
+    with map_exceptions(exc_map):
+  File "/usr/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/hari/Downloads/opp/scripts/train_local_gemma_policy.py", line 301, in <module>
+    main()
+  File "/home/hari/Downloads/opp/scripts/train_local_gemma_policy.py", line 272, in main
+    eval_result = evaluate_params(
+                  ^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/scripts/train_local_gemma_policy.py", line 173, in evaluate_params
+    episodes.append(run_episode(model_client, model_name, env_base_url, task, seed, params, max_steps=max_steps))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/scripts/train_local_gemma_policy.py", line 124, in run_episode
+    step = http.post(f"{env_base_url}/step", json=action)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_client.py", line 1144, in post
+    return self.request(
+           ^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_client.py", line 825, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_transports/default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+  File "/usr/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/home/hari/Downloads/opp/.venv/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout: The read operation timed out

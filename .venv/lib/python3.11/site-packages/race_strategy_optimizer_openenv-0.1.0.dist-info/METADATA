@@ -1,0 +1,95 @@
+Metadata-Version: 2.4
+Name: race-strategy-optimizer-openenv
+Version: 0.1.0
+Summary: OpenEnv environment for Formula-style race strategy optimization
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: openenv-core[core]>=0.2.2
+Requires-Dist: fastapi>=0.115.0
+Requires-Dist: uvicorn>=0.30.0
+Requires-Dist: pydantic>=2.7.0
+Requires-Dist: httpx>=0.27.0
+Requires-Dist: openai>=1.40.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.2.0; extra == "dev"
+
+# Race Strategy Optimizer (OpenEnv)
+
+Race Strategy Optimizer is a real-world inspired Formula race engineering environment where an agent does not drive the car, but chooses race strategy actions lap-by-lap.
+
+## Why this is useful
+
+Teams and analysts evaluate strategy under uncertainty (safety car windows, weather changes, tire wear cliffs). This environment models that decision layer and is useful for benchmarking LLM/RL planning quality.
+
+## Tasks
+
+1. `pit-window-easy` (easy): choose a near-optimal single-stop lap.
+2. `safety-car-medium` (medium): pit/no-pit during safety car for position trade-off.
+3. `weather-shift-hard` (hard): multi-stop adaptation from dry to rain.
+
+All tasks have deterministic graders returning scores in `[0.0, 1.0]`.
+
+## Action Space
+
+`RaceAction`
+- `action_type`: `push | conserve | hold | pit`
+- `pit_compound` (optional): `soft | medium | hard | intermediate | wet`
+
+## Observation Space
+
+`RaceObservation`
+- Lap progress, tire wear, fuel level
+- Current + short-horizon weather forecast
+- Safety car status
+- Position and simple rival gaps
+
+## Reward Logic
+
+Step reward is dense and normalized in `[0, 1]`.
+- Positive signal for position gains and healthy tire windows
+- Bonuses for context-correct pit calls (weather and safety car)
+- Penalties for poor wear management and invalid actions
+
+Final episode score comes from deterministic task-specific graders.
+
+## Local Setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+In another terminal:
+
+```bash
+python inference.py
+```
+
+## Required Environment Variables
+
+- `API_BASE_URL` (default set in `inference.py`)
+- `MODEL_NAME` (default set in `inference.py`)
+- `HF_TOKEN` (required for live model calls)
+
+Optional:
+- `ENV_BASE_URL` default: `http://localhost:8000`
+- `RACE_TASK`: one of the 3 task names
+
+## Docker
+
+```bash
+docker build -t race-strategy-openenv .
+docker run --rm -p 7860:7860 race-strategy-openenv
+```
+
+## OpenEnv Validate
+
+```bash
+openenv validate
+```
+
+## Hugging Face Space
+
+Deploy with this Dockerfile. The validator expects `POST /reset` to return HTTP 200.

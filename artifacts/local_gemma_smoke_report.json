@@ -1,0 +1,56 @@
+{
+  "model": "gemma4:e2b",
+  "api_base": "http://localhost:11434/v1",
+  "train_env": "http://localhost:8000",
+  "eval_env": "https://ihariganesh-f1-race-stratergy.hf.space",
+  "best_train_result": {
+    "params": {
+      "sprint_pit_lap": 9,
+      "sc_window_start": 17,
+      "sc_window_end": 20,
+      "late_wear_threshold": 0.9,
+      "rain_forecast_threshold": 0.55,
+      "wet_track_threshold": 0.55,
+      "dry_back_threshold": 0.2
+    },
+    "episodes": [
+      {
+        "task": "f1-sprint-dry",
+        "seed": 7,
+        "done": true,
+        "steps": 20,
+        "grader_score": 1.0,
+        "interim_progress_score": 0.0,
+        "optimal_total_time": 1844.8957,
+        "cumulative_race_time_seconds": 1844.8957
+      }
+    ],
+    "avg_grader_score": 1.0,
+    "avg_interim_progress_score": 0.0
+  },
+  "real_eval_result": {
+    "params": {
+      "sprint_pit_lap": 9,
+      "sc_window_start": 17,
+      "sc_window_end": 20,
+      "late_wear_threshold": 0.9,
+      "rain_forecast_threshold": 0.55,
+      "wet_track_threshold": 0.55,
+      "dry_back_threshold": 0.2
+    },
+    "episodes": [
+      {
+        "task": "f1-sprint-dry",
+        "seed": 7,
+        "done": true,
+        "steps": 20,
+        "grader_score": 1.0,
+        "interim_progress_score": 0.0,
+        "optimal_total_time": 1844.8957,
+        "cumulative_race_time_seconds": 1844.8957
+      }
+    ],
+    "avg_grader_score": 1.0,
+    "avg_interim_progress_score": 0.0
+  }
+}
