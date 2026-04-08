@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
@@ -279,8 +279,16 @@ def tasks() -> list[dict[str, object]]:
 
 
 @app.post("/reset", response_model=ResetResponse)
-def reset(payload: ResetPayload | None = None) -> ResetResponse:
-    payload = payload or ResetPayload()
+async def reset(request: Request) -> ResetResponse:
+    try:
+        raw_payload = await request.json()
+    except Exception:
+        raw_payload = {}
+
+    if not isinstance(raw_payload, dict):
+        raw_payload = {}
+
+    payload = ResetPayload.model_validate(raw_payload)
     return env.reset(task_name=payload.task, seed=payload.seed)
 
 
