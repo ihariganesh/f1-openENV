@@ -1,0 +1,64 @@
+{
+  "benchmark": "race_strategy_optimizer",
+  "model": "Qwen/Qwen2.5-72B-Instruct",
+  "api_base_url": "https://router.huggingface.co/v1",
+  "env_base_url": "https://ihariganesh-f1-race-stratergy.hf.space",
+  "seeds": [
+    7,
+    13,
+    21
+  ],
+  "episodes": [
+    {
+      "task": "f1-sprint-dry",
+      "seed": 7,
+      "score": 1.0
+    },
+    {
+      "task": "f1-feature-safetycar",
+      "seed": 7,
+      "score": 0.589545
+    },
+    {
+      "task": "f1-chaos-weather",
+      "seed": 7,
+      "score": 0.075669
+    },
+    {
+      "task": "f1-sprint-dry",
+      "seed": 13,
+      "score": 1.0
+    },
+    {
+      "task": "f1-feature-safetycar",
+      "seed": 13,
+      "score": 0.736773
+    },
+    {
+      "task": "f1-chaos-weather",
+      "seed": 13,
+      "score": 0.223011
+    },
+    {
+      "task": "f1-sprint-dry",
+      "seed": 21,
+      "score": 1.0
+    },
+    {
+      "task": "f1-feature-safetycar",
+      "seed": 21,
+      "score": 0.667727
+    },
+    {
+      "task": "f1-chaos-weather",
+      "seed": 21,
+      "score": 0.075669
+    }
+  ],
+  "task_average_scores": {
+    "f1-sprint-dry": 1.0,
+    "f1-feature-safetycar": 0.664682,
+    "f1-chaos-weather": 0.124783
+  },
+  "final_average_score": 0.596488
+}

@@ -1,0 +1,45 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Deploy HF Space",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"export HF_SPACE_ID=\"${HF_SPACE_ID:-iHariganesh/f1-race-stratergy}\"; if [[ -z \"$HF_TOKEN\" ]]; then echo HF_TOKEN_MISSING; exit 2; fi; /home/hari/Downloads/opp/.venv/bin/python /home/hari/Downloads/opp/scripts/deploy_to_hf_space.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Deploy Space Now",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"export HF_SPACE_ID=\"${HF_SPACE_ID:-iHariganesh/f1-race-stratergy}\"; if [[ -z \"$HF_TOKEN\" ]]; then echo HF_TOKEN_MISSING; exit 2; fi; /home/hari/Downloads/opp/.venv/bin/python /home/hari/Downloads/opp/scripts/deploy_to_hf_space.py; curl -sS -o /tmp/hf_health_latest.json -w '%{http_code}\\n' https://ihariganesh-f1-race-stratergy.hf.space/health"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Deploy Space Explicit Env",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"export HF_SPACE_ID=\"${HF_SPACE_ID:-iHariganesh/f1-race-stratergy}\"; if [[ -z \"$HF_TOKEN\" ]]; then echo HF_TOKEN_MISSING; exit 2; fi; /home/hari/Downloads/opp/.venv/bin/python /home/hari/Downloads/opp/scripts/deploy_to_hf_space.py; curl -sS -o /tmp/hf_health_latest.json -w '%{http_code}\\n' https://ihariganesh-f1-race-stratergy.hf.space/health"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Check Space Health",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"curl -sS -o /tmp/hf_health_latest.json -w '%{http_code}\\n' https://ihariganesh-f1-race-stratergy.hf.space/health && tail -n +1 /tmp/hf_health_latest.json | head -c 200; echo"
+			],
+			"isBackground": false
+		}
+	]
+}

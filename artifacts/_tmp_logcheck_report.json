@@ -1,0 +1,21 @@
+{
+  "benchmark": "race_strategy_optimizer",
+  "model": "Qwen/Qwen2.5-72B-Instruct",
+  "api_base_url": "https://router.huggingface.co/v1",
+  "env_base_url": "http://127.0.0.1:8000",
+  "seeds": [
+    7
+  ],
+  "episodes": [
+    {
+      "task": "f1-sprint-dry",
+      "seed": 7,
+      "score": 0.0
+    }
+  ],
+  "task_average_scores": {
+    "f1-sprint-dry": 0.0
+  },
+  "final_average_score": 0.0,
+  "interrupted": false
+}

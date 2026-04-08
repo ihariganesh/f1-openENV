@@ -21,6 +21,9 @@ class TaskConfig:
     tolerance_seconds: float
     track_temp_base: float        # Base track temperature (°C)
     drs_laps: Sequence[int]       # Laps where DRS is available
+    rain_start_lap: int | None = None
+    rain_ramp_laps: int = 0
+    rain_peak_wetness: float = 0.0
 
 
 TASKS: Dict[str, TaskConfig] = {
@@ -76,6 +79,77 @@ TASKS: Dict[str, TaskConfig] = {
         tolerance_seconds=35.0,     # Weather changes require more margin
         track_temp_base=35.0,
         drs_laps=tuple(range(5, 30)),  # No DRS in wet conditions
+        rain_start_lap=30,
+        rain_ramp_laps=5,
+        rain_peak_wetness=0.9,
+    ),
+    # Scenario aliases for the LLM Race Engineer mode.
+    "easy-one-stop": TaskConfig(
+        name="easy-one-stop",
+        difficulty="easy",
+        description=(
+            "20 lap dry race. Single stop strategy expected around lap 8-11. "
+            "No weather change and no safety car interruptions."
+        ),
+        total_laps=20,
+        start_compound="SOFT",
+        safety_car_laps=(),
+        pit_penalty_normal=20.0,
+        pit_penalty_safety_car=20.0,
+        tolerance_seconds=12.0,
+        track_temp_base=38.0,
+        drs_laps=tuple(range(3, 21)),
+    ),
+    "medium-strategy": TaskConfig(
+        name="medium-strategy",
+        difficulty="medium",
+        description=(
+            "50 lap dry race. The agent must balance one-stop versus two-stop strategy "
+            "using tire wear and pace trade-offs."
+        ),
+        total_laps=50,
+        start_compound="MEDIUM",
+        safety_car_laps=(),
+        pit_penalty_normal=20.0,
+        pit_penalty_safety_car=20.0,
+        tolerance_seconds=24.0,
+        track_temp_base=35.0,
+        drs_laps=tuple(range(5, 51)),
+    ),
+    "hard-safety-car": TaskConfig(
+        name="hard-safety-car",
+        difficulty="hard",
+        description=(
+            "50 lap race with a deterministic safety car on lap 15. "
+            "Pitting during this lap should be strongly beneficial."
+        ),
+        total_laps=50,
+        start_compound="MEDIUM",
+        safety_car_laps=(15,),
+        pit_penalty_normal=20.0,
+        pit_penalty_safety_car=10.0,
+        tolerance_seconds=24.0,
+        track_temp_base=35.0,
+        drs_laps=tuple(range(5, 51)),
+    ),
+    "ultra-chaos": TaskConfig(
+        name="ultra-chaos",
+        difficulty="hard",
+        description=(
+            "60 lap race with rain ramp starting lap 20 and a safety car on lap 40. "
+            "Agent must handle overlapping tire/weather/safety-car decisions."
+        ),
+        total_laps=60,
+        start_compound="SOFT",
+        safety_car_laps=(40,),
+        pit_penalty_normal=20.0,
+        pit_penalty_safety_car=10.0,
+        tolerance_seconds=36.0,
+        track_temp_base=35.0,
+        drs_laps=tuple(range(5, 60)),
+        rain_start_lap=20,
+        rain_ramp_laps=5,
+        rain_peak_wetness=0.9,
     ),
 }
 
@@ -90,13 +164,21 @@ def list_task_specs() -> List[TaskSpec]:
 # --------------- Weather model ---------------
 
 def track_wetness(task_name: str, lap: int) -> float:
-    if task_name != "f1-chaos-weather":
+    task = TASKS.get(task_name)
+    if task is None or task.rain_start_lap is None or task.rain_peak_wetness <= 0.0:
         return 0.0
-    if lap < 30:
+
+    assert task.rain_start_lap is not None
+    if lap < task.rain_start_lap:
         return 0.0
-    if lap >= 35:
-        return 0.9
-    return round((lap - 30) * (0.9 / 5.0), 4)
+    if task.rain_ramp_laps <= 0:
+        return round(task.rain_peak_wetness, 4)
+
+    full_wet_lap = task.rain_start_lap + task.rain_ramp_laps
+    if lap >= full_wet_lap:
+        return round(task.rain_peak_wetness, 4)
+
+    return round((lap - task.rain_start_lap) * (task.rain_peak_wetness / task.rain_ramp_laps), 4)
 
 
 def rain_forecast_next_5(task_name: str, lap: int) -> float:
@@ -293,14 +375,17 @@ def solve_optimal_total_time(task_name: str) -> float:
     task = TASKS[task_name]
     best = float("inf")
 
-    if task_name == "f1-sprint-dry":
+    if task_name in {"f1-sprint-dry", "easy-one-stop"}:
         lap_options = [[9, 10, 11, 12]]
         stop_counts = [1]
-    elif task_name == "f1-feature-safetycar":
+    elif task_name in {"f1-feature-safetycar", "hard-safety-car"}:
         lap_options = [[17, 18, 19, 20, 21], [32, 36, 40]]
         stop_counts = [1, 2]
+    elif task_name == "medium-strategy":
+        lap_options = [[15, 18, 22], [34, 38, 42]]
+        stop_counts = [1, 2]
     else:
-        lap_options = [[12, 15, 18], [30, 32, 34, 36], [46, 50, 54]]
+        lap_options = [[12, 15, 18], [20, 22, 24, 26], [44, 48, 52]]
         stop_counts = [2, 3]
 
     best = min(best, _simulate_strategy(task, {}))
@@ -313,7 +398,7 @@ def solve_optimal_total_time(task_name: str) -> float:
 
             compound_choices: List[List[TireCompound]] = []
             for _ in laps:
-                if task_name == "f1-chaos-weather":
+                if task_name in {"f1-chaos-weather", "ultra-chaos"}:
                     compound_choices.append(["MEDIUM", "HARD", "INTER", "WET"])
                 else:
                     compound_choices.append(["SOFT", "MEDIUM", "HARD"])

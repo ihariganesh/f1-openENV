@@ -1,0 +1,39 @@
+{
+  "benchmark": "race_strategy_optimizer",
+  "model": "Qwen/Qwen2.5-72B-Instruct",
+  "api_base_url": "https://router.huggingface.co/v1",
+  "env_base_url": "http://127.0.0.1:7860",
+  "seeds": [
+    7
+  ],
+  "episodes": [
+    {
+      "task": "easy-one-stop",
+      "seed": 7,
+      "score": 1.0
+    },
+    {
+      "task": "medium-strategy",
+      "seed": 7,
+      "score": 1.0
+    },
+    {
+      "task": "hard-safety-car",
+      "seed": 7,
+      "score": 1.0
+    },
+    {
+      "task": "ultra-chaos",
+      "seed": 7,
+      "score": 1.0
+    }
+  ],
+  "task_average_scores": {
+    "easy-one-stop": 1.0,
+    "medium-strategy": 1.0,
+    "hard-safety-car": 1.0,
+    "ultra-chaos": 1.0
+  },
+  "final_average_score": 1.0,
+  "interrupted": false
+}

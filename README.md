@@ -1,3 +1,15 @@
+---
+title: F1 Race Strategy Optimizer
+emoji: 🏎️
+colorFrom: blue
+colorTo: red
+sdk: docker
+app_port: 7860
+tags:
+  - openenv
+pinned: false
+---
+
 # 🏎️ F1 Race Strategy Optimizer — OpenEnv Hackathon
 
 An **interactive F1 race strategy environment** where AI agents learn to make
@@ -19,7 +31,14 @@ progressively harder races. Built for the
 | `f1-feature-safetycar` | Medium | 50 | Exploit safety car window (laps 18-20) for discounted pit stops |
 | `f1-chaos-weather` | Hard | 60 | Dynamic dry→wet transition at lap 30, requiring preemptive tire swaps |
 
-## 🧪 Observation Space (16 fields)
+OpenEnv scenario aliases available for stress testing:
+
+- `easy-one-stop` (easy)
+- `medium-strategy` (medium)
+- `hard-safety-car` (hard)
+- `ultra-chaos` (hard, overlapping weather + safety car)
+
+## 🧪 Observation Space (15 fields)
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -53,23 +72,25 @@ progressively harder races. Built for the
 - **new_compound**: Required when pitting. One of: SOFT, MEDIUM, HARD, INTER, WET
 - **pace_mode**: PUSH (-0.5s, +50% wear, +20% fuel) | BALANCED | CONSERVE (+1.0s, -50% wear, -20% fuel)
 
-## 📊 Reward Signal (11 components)
+## 📊 Reward Signal
 
-| # | Component | Range | Description |
-|---|-----------|-------|-------------|
-| 1 | Pace reward | 0 – 0.15 | Better lap times → higher reward |
-| 2 | Puncture penalty | -0.8 | Tire wear reaches 100% |
-| 3 | Wrong tire penalty | -0.6 | Slicks in rain or wets on dry |
-| 4 | Fuel depletion | -1.0 | Running out of fuel |
-| 5 | SC pit bonus | +0.3 | Pitting under safety car |
-| 6 | Weather preemption | +0.25 | Fitting rain tires before rain hits |
-| 7 | Tire health bonus | +0.05 | Maintaining wear in 20-70% sweet spot |
-| 8 | Over-extended stint | -0.1 | Running >85% wear without pitting |
-| 9 | Excessive pitting | -0.15 | More than 3 pit stops |
-| 10 | DRS push bonus | +0.05 | Pushing when DRS is available |
-| 11 | SC conserve bonus | +0.08 | Conserving under safety car |
+Per-step reward is clipped to **0.0–1.0** for stable learning and evaluator compliance,
+while still providing dense partial-progress feedback every lap.
 
-**Terminal bonus:** +2.0 (≥90% score), +1.0 (≥70%), +0.5 (≥50%)
+Core components:
+
+- `time_reward`: starts near `1.0` for competitive laps and decreases with slower lap times
+- `sc_pit_bonus`: +0.1 when pitting under safety car
+- `wrong_tire_penalty`: applied every lap when on slicks in damp/wet conditions
+- `puncture_penalty`: applied when tire wear reaches puncture range
+- action/fuel penalties: invalid pit actions and fuel depletion are penalized
+- terminal progress bonus: up to +0.2 at episode end, scaled by distance to optimal total time
+
+Final per-step formula:
+
+`reward = clip_0_1(raw_reward)`
+
+This keeps rewards interpretable and bounded while preserving trajectory-level guidance.
 
 ## 🏆 Grading
 
@@ -96,7 +117,9 @@ Non-linear degradation model with compound-specific performance cliffs:
 ```bash
 git clone https://github.com/your-user/f1-race-strategy-optimizer
 cd f1-race-strategy-optimizer
-pip install -r requirements.txt
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
 uvicorn app.main:app --host 0.0.0.0 --port 7860
 ```
 
@@ -123,15 +146,144 @@ curl -X POST http://localhost:7860/state -H "Content-Type: application/json" -d 
 ### Run Tests
 
 ```bash
-pytest tests/ -v
+PYTHONPATH=. python -m pytest -v
 ```
 
 ### Run Inference Agent
 
 ```bash
-export HF_TOKEN=hf_...
+set -a
+source .env.example
+# Replace HF_TOKEN with a real token before running.
+set +a
+
+export OPENAI_API_KEY=<your_openai_or_router_key>
+export API_BASE_URL=https://router.huggingface.co/v1
+export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
 export ENV_BASE_URL=http://localhost:7860
-python inference.py
+
+# Reproducible baseline across fixed seeds (default: 7,13,21)
+python -u inference.py
+
+# Optional overrides
+# export INFERENCE_SEEDS=7,13,21,42
+# export BASELINE_REPORT_PATH=artifacts/baseline_inference_report.json
+```
+
+The baseline runner writes a reproducible report JSON containing per-task/per-seed
+scores and final averages.
+
+### One-Command Local Integration Check (Canonical 3 Tasks)
+
+This command starts the local FastAPI environment, runs `inference.py` against
+the canonical easy/medium/hard tasks, writes a report, and then stops the server:
+
+```bash
+bash scripts/local_integration_check.sh
+```
+
+Optional overrides:
+
+```bash
+INFERENCE_SEEDS=7,13 MAX_STEPS=80 BASELINE_REPORT_PATH=artifacts/local_integration_report.json bash scripts/local_integration_check.sh
+```
+
+### Baseline Scores (Reproducible)
+
+Use fixed seeds to keep scores reproducible:
+
+```bash
+INTEGRATION_FORCE_FALLBACK=1 INFERENCE_SEEDS=7,13,21 BASELINE_REPORT_PATH=artifacts/baseline_inference_report_3tasks.json bash scripts/local_integration_check.sh
+```
+
+This generates a JSON artifact with per-task scores for:
+
+- `f1-sprint-dry` (easy)
+- `f1-feature-safetycar` (medium)
+- `f1-chaos-weather` (hard)
+
+Latest generated result (`artifacts/baseline_inference_report_3tasks.json`):
+
+| Task | Average Score (Seeds: 7, 13, 21) |
+|------|----------------------------------|
+| `f1-sprint-dry` | `1.000000` |
+| `f1-feature-safetycar` | `0.939409` |
+| `f1-chaos-weather` | `1.000000` |
+| **Final average** | **`0.979803`** |
+
+The inference runner uses the OpenAI Python client and reads API credentials from `OPENAI_API_KEY`.
+If no key is present, it transparently runs a deterministic fallback policy (used above for reproducibility checks).
+
+### Clean Container + HF Deploy Verification
+
+Build and run the container locally:
+
+```bash
+docker build -t opp-eval-check .
+cid=$(docker run -d -p 8786:7860 opp-eval-check)
+sleep 5
+curl -fsS http://127.0.0.1:8786/health
+docker rm -f "$cid"
+```
+
+Deploy/update the Hugging Face Space:
+
+```bash
+export HF_SPACE_ID=ihariganesh/f1-race-stratergy
+export HF_TOKEN=hf_xxx
+./.venv/bin/python scripts/deploy_to_hf_space.py
+curl -fsS https://ihariganesh-f1-race-stratergy.hf.space/health
+```
+
+### Functional + Non-Functional Compliance Matrix
+
+- Real-world simulation: race strategy optimization with pit timing, weather adaptation, and fuel/tire trade-offs.
+- OpenEnv spec: typed Pydantic models (`ObservationSpace`, `ActionSpace`, `Reward`), `reset`/`step`/`state`, and `openenv.yaml` metadata.
+- 3 graded tasks: canonical easy/medium/hard tasks with deterministic programmatic grader in `tasks.py`.
+- Meaningful reward: dense per-step reward with progress signals and penalties for wrong-tire, puncture risk, invalid actions, and fuel depletion.
+- Baseline inference: OpenAI client (`openai` package), reads `OPENAI_API_KEY`, writes reproducible score report JSON.
+- HF Space deployment: Docker-based Space with metadata tag `openenv`.
+- Containerized execution: validated via `docker build` and runtime health checks.
+- Documentation: includes environment motivation, task definitions, action/observation spaces, setup, usage, and baseline scoring workflow.
+
+Modes:
+
+- Default: uses your exported API credentials (`OPENAI_API_KEY` or `HF_TOKEN`) if present.
+- Fallback-only mode: `INTEGRATION_FORCE_FALLBACK=1 bash scripts/local_integration_check.sh`
+
+### Required Submission Variables
+
+The following variables are mandatory for Round 1 evaluation:
+
+- `HF_TOKEN`
+- `API_BASE_URL`
+- `MODEL_NAME`
+
+For local runs, place them in `.env` (or export in shell).
+For Hugging Face Space, set them in **Space Settings → Variables and secrets**.
+
+You can also set them programmatically:
+
+```bash
+export HF_SPACE_ID=ihariganesh/f1-race-stratergy
+export HF_TOKEN=hf_xxx
+export API_BASE_URL=https://router.huggingface.co/v1
+export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
+python scripts/set_space_secrets.py
+```
+
+### Pre-Submission Validator
+
+The validator requires the Space URL as an argument:
+
+```bash
+bash ./validate-submission.sh 'https://ihariganesh-f1-race-stratergy.hf.space' .
+```
+
+If you run it without arguments, it prints:
+
+```text
+Usage: ./validate-submission.sh <ping_url> [repo_dir]
 ```
 
 ## 📁 Project Structure
@@ -144,8 +296,19 @@ python inference.py
 ├── inference.py       # LLM agent + expert fallback strategy
 ├── tests/             # Determinism, contract, grader tests
 ├── Dockerfile         # Production container
-└── requirements.txt
+└── src/               # Alternate package implementation (not used by deployed app)
 ```
+
+### Runtime Path Clarification
+
+Submission runtime uses the root modules imported by `app/main.py`:
+
+- `env.py`
+- `models.py`
+- `tasks.py`
+
+The `src/race_strategy_optimizer/` package is kept for package-style development,
+but it is not the entry path used by the deployed FastAPI app.
 
 ## 🏗️ Architecture
 

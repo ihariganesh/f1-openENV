@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 import sys
 from pathlib import Path
 
@@ -29,6 +30,7 @@ def main() -> int:
         token=token,
         ignore_patterns=[
             ".venv/*",
+            ".vscode/*",
             "__pycache__/*",
             ".pytest_cache/*",
             "*.pyc",

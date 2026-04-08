@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
@@ -83,3 +84,22 @@ class TaskSpec(BaseModel):
 class TaskSummary(BaseModel):
     benchmark: str = "race_strategy_optimizer"
     tasks: List[TaskSpec]
+
+
+class DecisionActionToken(str, Enum):
+    stay_out = "STAY_OUT"
+    pit_soft = "PIT_SOFT"
+    pit_medium = "PIT_MEDIUM"
+    pit_hard = "PIT_HARD"
+    pit_inter = "PIT_INTER"
+    pit_wet = "PIT_WET"
+
+
+class LLMDecision(BaseModel):
+    reasoning: str
+    action: DecisionActionToken
+
+
+# Compatibility aliases for alternative agent scripts that expect these names.
+Observation = ObservationSpace
+Action = ActionSpace

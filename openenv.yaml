@@ -1,6 +1,15 @@
 spec_version: 1
 name: race_strategy_optimizer
+version: "1.0.0"
+description: "A real-world logistics and resource management simulator based on F1 race strategy."
 type: space
 runtime: fastapi
-app: server.app:app
-port: 8000
+app: app.main:app
+port: 7860
+tasks:
+  - id: f1-sprint-dry
+    description: "Easy: 20-lap dry sprint; optimize one-stop timing around soft tire cliff."
+  - id: f1-feature-safetycar
+    description: "Medium: 50-lap race; exploit deterministic safety-car pit window for time gain."
+  - id: f1-chaos-weather
+    description: "Hard: 60-lap dry-to-wet transition; preempt weather and select correct wet compounds."

@@ -94,7 +94,22 @@ fi
 
 log "Step 3/3: openenv validate"
 VALIDATE_OK=false
-VALIDATE_OUTPUT=$(cd "$REPO_DIR" && openenv validate 2>&1) && VALIDATE_OK=true
+OPENENV_BIN=""
+if command -v openenv >/dev/null 2>&1; then
+  OPENENV_BIN="openenv"
+elif [ -x "$REPO_DIR/.venv/bin/openenv" ]; then
+  OPENENV_BIN="$REPO_DIR/.venv/bin/openenv"
+elif [ -x "$REPO_DIR/venv/bin/openenv" ]; then
+  OPENENV_BIN="$REPO_DIR/venv/bin/openenv"
+fi
+
+if [ -z "$OPENENV_BIN" ]; then
+  fail "openenv validate failed"
+  printf "%s\n" "openenv binary not found. Install openenv or create a local venv with openenv installed."
+  stop_at "Step 3"
+fi
+
+VALIDATE_OUTPUT=$(cd "$REPO_DIR" && "$OPENENV_BIN" validate 2>&1) && VALIDATE_OK=true
 if [ "$VALIDATE_OK" = true ]; then
   pass "openenv validate passed"
 else

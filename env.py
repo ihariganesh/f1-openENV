@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Optional
 
 from models import ActionSpace, ObservationSpace, ResetResponse, Reward, StepResponse, TireCompound
@@ -33,8 +33,8 @@ class RaceState:
     seed: int
     terminal_bonus_awarded: bool
     last_action_error: Optional[str]
-    pit_stop_count: int
-    pit_laps: list[int]
+    pit_stop_count: int = 0
+    pit_laps: list[int] = field(default_factory=list)
 
 
 class F1StrategyEnv:
@@ -115,89 +115,56 @@ class F1StrategyEnv:
         st.tire_age_laps += 1
 
         # --- Penalty and reward calculation ---
-        lap_reward = 0.0
-        penalty = 0.0
-        bonus = 0.0
+        puncture_penalty = 0.0
+        wrong_tire_penalty = 0.0
 
-        # 1. Dense pace reward: better lap times yield more reward
-        optimal_base = 90.0 - 1.2  # Best theoretical base (SOFT, no fuel)
-        pace_score = max(0.0, 1.0 - ((lap_time - optimal_base) / 25.0))
-        lap_reward += pace_score * 0.15
-
-        # 2. Tire failure (puncture) penalty
+        # 1. Tire failure (puncture) penalty
         puncture_flag = False
         if st.tire_wear_percentage >= 1.0:
-            penalty += 0.8
+            puncture_penalty = 0.8
             puncture_flag = True
             lap_time += 6.0
 
-        # 3. Wrong tire compound penalty
+        # 2. Wrong tire compound penalty (evaluated every lap)
         wet = track_wetness(st.task_name, lap)
         wrong_tire_flag = False
         if wet > 0.5 and st.current_tire_compound in {"SOFT", "MEDIUM", "HARD"}:
-            penalty += 0.6  # Running slicks in heavy rain
+            wrong_tire_penalty = 1.5 * wet
             wrong_tire_flag = True
-        elif wet < 0.2 and st.current_tire_compound == "WET":
-            penalty += 0.4  # Running wets on dry track
+        elif wet > 0.1 and st.current_tire_compound in {"SOFT", "MEDIUM", "HARD"}:
+            wrong_tire_penalty = 0.3 * wet
             wrong_tire_flag = True
 
-        # 4. Fuel depletion penalty
+        # 3. Fuel depletion flag
         fuel_critical = False
         if st.fuel_kg <= 0.0:
-            penalty += 1.0
             fuel_critical = True
-
-        # 5. Safety car pit reward: pitting under SC saves time
-        if pit_stop and st.safety_car_active:
-            bonus += 0.3
-
-        # 6. Proactive weather adaptation reward
-        forecast = rain_forecast_next_5(st.task_name, lap)
-        if pit_stop and forecast > 0.5 and action.new_compound in {"INTER", "WET"} and wet <= 0.3:
-            bonus += 0.25  # Smart preemptive pit
-
-        # 7. Tire health management reward
-        if 0.2 <= st.tire_wear_percentage <= 0.7:
-            bonus += 0.05  # In the sweet spot
-        elif st.tire_wear_percentage > 0.85 and not pit_stop:
-            penalty += 0.1  # Dangerously extended stint
-
-        # 8. Excessive pit stop penalty (more than 3 stops is almost always suboptimal)
-        if st.pit_stop_count > 3:
-            penalty += 0.15
-
-        # 9. Invalid action penalty
-        if st.last_action_error:
-            penalty += 0.3
-
-        # 10. PUSH mode reward when DRS is available (realistic race behavior)
-        if action.pace_mode == "PUSH" and is_drs_available(st.task_name, lap) and st.tire_wear_percentage < 0.6:
-            bonus += 0.05
-
-        # 11. CONSERVE under safety car bonus
-        if action.pace_mode == "CONSERVE" and st.safety_car_active and not pit_stop:
-            bonus += 0.08
 
         st.last_lap_time_seconds = lap_time
         st.cumulative_race_time_seconds += lap_time
 
-        reward_value = lap_reward + bonus - penalty
+        # Keep per-step reward in a stable 0..1 range while preserving dense progress signals.
+        time_reward = max(0.0, 1.0 - max(0.0, (lap_time - 90.0)) * 0.01)
+        sc_pit_bonus = 0.1 if (pit_stop and st.safety_car_active) else 0.0
+        reward_value_raw = time_reward + sc_pit_bonus - wrong_tire_penalty - puncture_penalty
+
+        if st.last_action_error:
+            reward_value_raw -= 0.3
+        if fuel_critical:
+            reward_value_raw -= 1.0
 
         # --- Terminal reward ---
         st.current_lap += 1
         st.done = st.current_lap > st.total_laps
 
+        grade = grade_episode(st.task_name, st.cumulative_race_time_seconds)
         if st.done and not st.terminal_bonus_awarded:
-            grade = grade_episode(st.task_name, st.cumulative_race_time_seconds)
-            if grade.score >= 0.9:
-                reward_value += 2.0
-            elif grade.score >= 0.7:
-                reward_value += 1.0
-            elif grade.score >= 0.5:
-                reward_value += 0.5
+            delta = st.cumulative_race_time_seconds - grade.optimal_total_time
+            terminal_bonus = 0.2 * max(0.0, 1.0 - delta / grade.tolerance_seconds)
+            reward_value_raw += terminal_bonus
             st.terminal_bonus_awarded = True
-        else:
-            grade = grade_episode(st.task_name, st.cumulative_race_time_seconds)
+
+        reward_value = min(1.0, max(0.0, reward_value_raw))
 
         reward_model = Reward(value=reward_value)
         st.cumulative_reward += reward_model.value
@@ -216,7 +183,11 @@ class F1StrategyEnv:
             "wrong_tire": wrong_tire_flag,
             "fuel_critical": fuel_critical,
             "pit_stop_count": st.pit_stop_count,
-            "lap_reward_breakdown": f"pace={round(lap_reward, 3)},bonus={round(bonus, 3)},penalty={round(penalty, 3)}",
+            "lap_reward_breakdown": (
+                f"time={round(time_reward, 3)},sc_pit_bonus={round(sc_pit_bonus, 3)},"
+                f"wrong_tire_penalty={round(wrong_tire_penalty, 3)},puncture_penalty={round(puncture_penalty, 3)},"
+                f"raw={round(reward_value_raw, 3)},clipped={round(reward_value, 3)}"
+            ),
         }
 
         return StepResponse(observation=self._observation(), reward=reward_model.value, done=st.done, info=info)
@@ -270,7 +241,7 @@ class F1StrategyEnv:
             current_tire_compound=st.current_tire_compound,
             tire_age_laps=st.tire_age_laps,
             tire_wear_percentage=round(st.tire_wear_percentage, 4),
-            fuel_kg=round(st.fuel_kg, 2),
+            fuel_kg=round(st.fuel_kg, 4),
             track_wetness=round(track_wetness(st.task_name, lap_for_weather), 4),
             rain_forecast_next_5_laps=round(rain_forecast_next_5(st.task_name, lap_for_weather), 4),
             safety_car_active=st.safety_car_active,

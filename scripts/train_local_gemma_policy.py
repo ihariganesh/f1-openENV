@@ -24,6 +24,27 @@ class PolicyParams:
     dry_back_threshold: float
 
 
+def _post_json_with_retry(
+    http: httpx.Client,
+    url: str,
+    payload: Dict[str, Any],
+    *,
+    retries: int,
+    tag: str,
+) -> Dict[str, Any]:
+    last_exc: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            resp = http.post(url, json=payload)
+            resp.raise_for_status()
+            return resp.json()
+        except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError) as exc:
+            last_exc = exc
+            print(f"[RETRY] tag={tag} attempt={attempt}/{retries} error={exc}", flush=True)
+
+    raise RuntimeError(f"request failed after {retries} attempts for {tag}: {last_exc}")
+
+
 def _prompt_for(obs: Dict[str, Any], params: PolicyParams) -> str:
     return (
         "You are an F1 race strategy engineer.\n"
@@ -98,58 +119,88 @@ def run_episode(
     seed: int,
     params: PolicyParams,
     max_steps: int = 80,
+    http_timeout: float = 60.0,
+    request_retries: int = 3,
 ) -> Dict[str, Any]:
     print(f"[EPISODE_START] task={task} seed={seed} env={env_base_url}", flush=True)
-    with httpx.Client(timeout=60.0) as http:
-        reset = http.post(f"{env_base_url}/reset", json={"task": task, "seed": seed})
-        reset.raise_for_status()
-        payload = reset.json()
-
-        steps = 0
-        while not payload.get("done", False) and steps < max_steps:
-            obs = payload.get("observation", {})
-            msg = _prompt_for(obs, params)
-            response = model_client.chat.completions.create(
-                model=model_name,
-                messages=[
-                    {"role": "system", "content": "Return only valid JSON."},
-                    {"role": "user", "content": msg},
-                ],
-                temperature=0,
-                max_tokens=80,
+    with httpx.Client(timeout=http_timeout) as http:
+        try:
+            payload = _post_json_with_retry(
+                http,
+                f"{env_base_url}/reset",
+                {"task": task, "seed": seed},
+                retries=request_retries,
+                tag=f"reset:{task}:{seed}",
             )
-            text = (response.choices[0].message.content or "").strip()
-            action = _safe_action(text)
 
-            step = http.post(f"{env_base_url}/step", json=action)
-            step.raise_for_status()
-            payload = step.json()
-            steps += 1
-
-            if steps % 10 == 0 or bool(payload.get("done", False)):
+            steps = 0
+            while not payload.get("done", False) and steps < max_steps:
                 obs = payload.get("observation", {})
-                lap = obs.get("current_lap", "?")
-                total_laps = obs.get("total_laps", "?")
-                reward = payload.get("reward", 0.0)
-                print(
-                    f"[EPISODE_PROGRESS] task={task} seed={seed} step={steps} lap={lap}/{total_laps} reward={reward}",
-                    flush=True,
+                msg = _prompt_for(obs, params)
+                response = model_client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": "Return only valid JSON."},
+                        {"role": "user", "content": msg},
+                    ],
+                    temperature=0,
+                    max_tokens=80,
                 )
+                text = (response.choices[0].message.content or "").strip()
+                action = _safe_action(text)
 
-        state = http.post(f"{env_base_url}/state", json={})
-        state.raise_for_status()
-        state_data = state.json()
+                payload = _post_json_with_retry(
+                    http,
+                    f"{env_base_url}/step",
+                    action,
+                    retries=request_retries,
+                    tag=f"step:{task}:{seed}:{steps + 1}",
+                )
+                steps += 1
 
-    result = {
-        "task": task,
-        "seed": seed,
-        "done": bool(payload.get("done", False)),
-        "steps": steps,
-        "grader_score": float(state_data.get("grader_score", 0.0)),
-        "interim_progress_score": float(state_data.get("interim_progress_score", 0.0)),
-        "optimal_total_time": float(state_data.get("optimal_total_time", 0.0)),
-        "cumulative_race_time_seconds": float(state_data.get("cumulative_race_time_seconds", 0.0)),
-    }
+                if steps % 10 == 0 or bool(payload.get("done", False)):
+                    obs = payload.get("observation", {})
+                    lap = obs.get("current_lap", "?")
+                    total_laps = obs.get("total_laps", "?")
+                    reward = payload.get("reward", 0.0)
+                    print(
+                        f"[EPISODE_PROGRESS] task={task} seed={seed} step={steps} lap={lap}/{total_laps} reward={reward}",
+                        flush=True,
+                    )
+
+            state_data = _post_json_with_retry(
+                http,
+                f"{env_base_url}/state",
+                {},
+                retries=request_retries,
+                tag=f"state:{task}:{seed}",
+            )
+
+            result = {
+                "task": task,
+                "seed": seed,
+                "done": bool(payload.get("done", False)),
+                "steps": steps,
+                "grader_score": float(state_data.get("grader_score", 0.0)),
+                "interim_progress_score": float(state_data.get("interim_progress_score", 0.0)),
+                "optimal_total_time": float(state_data.get("optimal_total_time", 0.0)),
+                "cumulative_race_time_seconds": float(state_data.get("cumulative_race_time_seconds", 0.0)),
+                "error": "",
+            }
+        except Exception as exc:
+            result = {
+                "task": task,
+                "seed": seed,
+                "done": False,
+                "steps": 0,
+                "grader_score": 0.0,
+                "interim_progress_score": 0.0,
+                "optimal_total_time": 0.0,
+                "cumulative_race_time_seconds": 0.0,
+                "error": str(exc),
+            }
+            print(f"[EPISODE_ERROR] task={task} seed={seed} error={exc}", flush=True)
+
     print(
         f"[EPISODE_END] task={task} seed={seed} done={result['done']} steps={result['steps']} score={result['grader_score']:.4f}",
         flush=True,
@@ -165,12 +216,26 @@ def evaluate_params(
     tasks: List[str],
     seeds: List[int],
     max_steps: int,
+    http_timeout: float,
+    request_retries: int,
 ) -> Dict[str, Any]:
     episodes: List[Dict[str, Any]] = []
     for task in tasks:
         for seed in seeds:
             print(f"[EVAL_RUN] task={task} seed={seed}", flush=True)
-            episodes.append(run_episode(model_client, model_name, env_base_url, task, seed, params, max_steps=max_steps))
+            episodes.append(
+                run_episode(
+                    model_client,
+                    model_name,
+                    env_base_url,
+                    task,
+                    seed,
+                    params,
+                    max_steps=max_steps,
+                    http_timeout=http_timeout,
+                    request_retries=request_retries,
+                )
+            )
 
     avg_score = sum(ep["grader_score"] for ep in episodes) / max(1, len(episodes))
     avg_progress = sum(ep["interim_progress_score"] for ep in episodes) / max(1, len(episodes))
@@ -190,6 +255,8 @@ def train_params(
     train_seeds: List[int],
     trials: int,
     max_steps: int,
+    http_timeout: float,
+    request_retries: int,
 ) -> Dict[str, Any]:
     candidates = list(_candidate_params())
     random.shuffle(candidates)
@@ -205,6 +272,8 @@ def train_params(
             tasks=train_tasks,
             seeds=train_seeds,
             max_steps=max_steps,
+            http_timeout=http_timeout,
+            request_retries=request_retries,
         )
         print(
             f"[TRAIN] trial={idx}/{len(selected)} avg_grader_score={result['avg_grader_score']:.4f} "
@@ -244,6 +313,8 @@ def main() -> None:
     parser.add_argument("--eval-seeds", default="7,13,21", help="Comma-separated eval seeds.")
     parser.add_argument("--trials", type=int, default=16, help="Number of policy-parameter candidates to evaluate.")
     parser.add_argument("--max-steps", type=int, default=80, help="Maximum steps per episode.")
+    parser.add_argument("--http-timeout", type=float, default=120.0, help="Per-request timeout in seconds.")
+    parser.add_argument("--request-retries", type=int, default=3, help="Retry count for reset/step/state HTTP calls.")
     parser.add_argument(
         "--out",
         default="artifacts/local_gemma_training_report.json",
@@ -266,6 +337,8 @@ def main() -> None:
         train_seeds=train_seeds,
         trials=args.trials,
         max_steps=args.max_steps,
+        http_timeout=args.http_timeout,
+        request_retries=args.request_retries,
     )
 
     best_params = PolicyParams(**best["params"])
@@ -277,6 +350,8 @@ def main() -> None:
         tasks=eval_tasks,
         seeds=eval_seeds,
         max_steps=args.max_steps,
+        http_timeout=args.http_timeout,
+        request_retries=args.request_retries,
     )
 
     report = {

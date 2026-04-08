@@ -1,0 +1,33 @@
+{
+  "benchmark": "race_strategy_optimizer",
+  "model": "Qwen/Qwen2.5-72B-Instruct",
+  "api_base_url": "https://router.huggingface.co/v1",
+  "env_base_url": "http://127.0.0.1:7860",
+  "seeds": [
+    7
+  ],
+  "episodes": [
+    {
+      "task": "f1-sprint-dry",
+      "seed": 7,
+      "score": 1.0
+    },
+    {
+      "task": "f1-feature-safetycar",
+      "seed": 7,
+      "score": 0.939409
+    },
+    {
+      "task": "f1-chaos-weather",
+      "seed": 7,
+      "score": 1.0
+    }
+  ],
+  "task_average_scores": {
+    "f1-sprint-dry": 1.0,
+    "f1-feature-safetycar": 0.939409,
+    "f1-chaos-weather": 1.0
+  },
+  "final_average_score": 0.979803,
+  "interrupted": false
+}
