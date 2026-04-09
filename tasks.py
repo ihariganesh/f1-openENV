@@ -416,8 +416,10 @@ def grade_episode(task_name: str, agent_total_time: float) -> GraderResult:
     task = TASKS[task_name]
     optimal = solve_optimal_total_time(task_name)
     delta = agent_total_time - optimal
-    score = max(0.0, 1.0 - (delta / task.tolerance_seconds))
-    score = min(1.0, score)
+    raw_score = 1.0 - (delta / task.tolerance_seconds)
+    # Hackathon validator expects strict open interval (0, 1), not inclusive bounds.
+    eps = 1e-4
+    score = max(eps, min(1.0 - eps, raw_score))
     return GraderResult(
         score=score,
         agent_total_time=agent_total_time,
