@@ -33,6 +33,7 @@ REPORT_PATH = os.getenv("BASELINE_REPORT_PATH", "artifacts/baseline_inference_re
 _LLM_DISABLED = False
 _LLM_DISABLE_REASON = ""
 _LLM_ERROR_COUNT = 0
+_LLM_CALL_COUNT = 0
 
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -315,6 +316,7 @@ def _action_token_to_env_action(token: DecisionActionToken, obs: dict) -> str:
 
 
 def _llm_decision_json(client: OpenAI, obs: dict) -> Tuple[str, DecisionActionToken]:
+    global _LLM_CALL_COUNT
     user_payload = {
         "telemetry": obs,
         "output_schema": {
@@ -328,6 +330,7 @@ def _llm_decision_json(client: OpenAI, obs: dict) -> Tuple[str, DecisionActionTo
         {"role": "user", "content": json.dumps(user_payload)},
     ]
     try:
+        _LLM_CALL_COUNT += 1
         completion = client.chat.completions.create(
             model=MODEL_NAME,
             messages=messages,
@@ -339,6 +342,7 @@ def _llm_decision_json(client: OpenAI, obs: dict) -> Tuple[str, DecisionActionTo
         text = (completion.choices[0].message.content or "").strip()
     except Exception:
         # Some model/provider combinations reject response_format=json_object.
+        _LLM_CALL_COUNT += 1
         completion = client.chat.completions.create(
             model=MODEL_NAME,
             messages=messages,
@@ -372,6 +376,22 @@ def choose_action(client: Optional[OpenAI], obs: dict) -> Tuple[str, str]:
             _LLM_DISABLE_REASON = f"LLM disabled after repeated errors: {type(exc).__name__}"
             print(f"[LLM_WARN] {_LLM_DISABLE_REASON}", flush=True, file=sys.stderr)
         raise RuntimeError(f"LLM call failed: {type(exc).__name__}: {exc}") from exc
+
+
+def probe_llm_proxy(client: OpenAI) -> None:
+    """Make a tiny startup request to ensure evaluator proxy traffic is observable."""
+    global _LLM_CALL_COUNT
+    _LLM_CALL_COUNT += 1
+    client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": "You are a validator."},
+            {"role": "user", "content": "Return exactly OK."},
+        ],
+        temperature=0,
+        max_tokens=8,
+        stream=False,
+    )
 
 
 def to_payload(action: str) -> dict:
@@ -450,12 +470,19 @@ def run_task(http: httpx.Client, client: Optional[OpenAI], task: str, seed: int)
 
 
 def main() -> None:
+    global _LLM_CALL_COUNT
     if not API_BASE_URL:
         raise RuntimeError("API_BASE_URL is required")
     if not API_KEY:
         raise RuntimeError("API_KEY is required")
+    if not TASKS:
+        raise RuntimeError("INFERENCE_TASKS resolved to empty list; cannot run evaluation")
 
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    # Helpful diagnostics for validator triage (stderr only; stdout format remains strict).
+    print(f"[INFO] using_api_base_url={API_BASE_URL}", flush=True, file=sys.stderr)
+    probe_llm_proxy(client)
+
     http = httpx.Client(timeout=60.0)
 
     all_scores: List[float] = []
@@ -499,6 +526,8 @@ def main() -> None:
         report_file.parent.mkdir(parents=True, exist_ok=True)
         report_file.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(f"BASELINE_REPORT={report_file}", flush=True, file=sys.stderr)
+        if _LLM_CALL_COUNT <= 0:
+            raise RuntimeError("No LLM proxy calls were made during inference run")
     finally:
         http.close()
 
