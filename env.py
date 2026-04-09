@@ -144,8 +144,8 @@ class F1StrategyEnv:
         st.cumulative_race_time_seconds += lap_time
 
         # Keep per-step reward in a stable 0..1 range while preserving dense progress signals.
-        time_reward = max(0.0, 1.0 - max(0.0, (lap_time - 90.0)) * 0.01)
-        sc_pit_bonus = 0.1 if (pit_stop and st.safety_car_active) else 0.0
+        time_reward = 1.0 - max(0.0, (lap_time - 90.0)) * 0.01
+        sc_pit_bonus = 0.3 if (pit_stop and st.safety_car_active) else 0.0
         reward_value_raw = time_reward + sc_pit_bonus - wrong_tire_penalty - puncture_penalty
 
         if st.last_action_error:
@@ -248,7 +248,7 @@ class F1StrategyEnv:
             last_lap_time_seconds=round(st.last_lap_time_seconds, 4),
             cumulative_race_time_seconds=round(st.cumulative_race_time_seconds, 4),
             pit_stop_count=st.pit_stop_count,
-            drs_available=is_drs_available(st.task_name, lap_for_weather),
-            track_temperature_c=track_temperature(st.task_name, lap_for_weather),
-            tire_cliff_proximity=tire_cliff_proximity(st.current_tire_compound, st.tire_age_laps),
+            drs_available=False,
+            track_temperature_c=35.0,
+            tire_cliff_proximity=round(min(1.0, st.tire_wear_percentage / 0.85), 4),
         )

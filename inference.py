@@ -14,7 +14,7 @@ from openai import OpenAI
 
 from models import DecisionActionToken, LLMDecision
 
-API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN") or os.getenv("API_KEY")
+API_KEY = os.getenv("API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 ENV_BASE_URL = os.getenv("ENV_BASE_URL") or "http://localhost:8000"
@@ -451,10 +451,12 @@ def run_task(http: httpx.Client, client: Optional[OpenAI], task: str, seed: int)
 
 
 def main() -> None:
-    if not os.getenv("OPENAI_API_KEY"):
-        print("[WARN] OPENAI_API_KEY not set; falling back to HF_TOKEN/API_KEY if available", flush=True, file=sys.stderr)
+    if not os.getenv("API_BASE_URL"):
+        print("[WARN] API_BASE_URL not set; using default router base URL", flush=True, file=sys.stderr)
+    if not os.getenv("API_KEY"):
+        print("[WARN] API_KEY not set; falling back to OPENAI_API_KEY/HF_TOKEN if available", flush=True, file=sys.stderr)
 
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY) if API_KEY else None
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY) if API_KEY and API_BASE_URL else None
     http = httpx.Client(timeout=60.0)
 
     all_scores: List[float] = []
