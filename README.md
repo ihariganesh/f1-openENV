@@ -154,11 +154,11 @@ PYTHONPATH=. python -m pytest -v
 ```bash
 set -a
 source .env.example
-# Replace HF_TOKEN with a real token before running.
+# Replace API_KEY with a valid key before running.
 set +a
 
-export OPENAI_API_KEY=<your_openai_or_router_key>
 export API_BASE_URL=https://router.huggingface.co/v1
+export API_KEY=<your_proxy_or_router_key>
 export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
 export ENV_BASE_URL=http://localhost:7860
 
@@ -211,8 +211,8 @@ Latest generated result (`artifacts/baseline_inference_report_3tasks.json`):
 | `f1-chaos-weather` | `1.000000` |
 | **Final average** | **`0.979803`** |
 
-The inference runner uses the OpenAI Python client and reads API credentials from `OPENAI_API_KEY`.
-If no key is present, it transparently runs a deterministic fallback policy (used above for reproducibility checks).
+The inference runner uses the OpenAI Python client and reads credentials from `API_BASE_URL` and `API_KEY`.
+For hackathon evaluation, this is required so calls are observed on the provided LiteLLM proxy key.
 
 ### Clean Container + HF Deploy Verification
 
@@ -241,22 +241,21 @@ curl -fsS https://ihariganesh-f1-race-stratergy.hf.space/health
 - OpenEnv spec: typed Pydantic models (`ObservationSpace`, `ActionSpace`, `Reward`), `reset`/`step`/`state`, and `openenv.yaml` metadata.
 - 3 graded tasks: canonical easy/medium/hard tasks with deterministic programmatic grader in `tasks.py`.
 - Meaningful reward: dense per-step reward with progress signals and penalties for wrong-tire, puncture risk, invalid actions, and fuel depletion.
-- Baseline inference: OpenAI client (`openai` package), reads `OPENAI_API_KEY`, writes reproducible score report JSON.
+- Baseline inference: OpenAI client (`openai` package), reads `API_BASE_URL` + `API_KEY`, writes reproducible score report JSON.
 - HF Space deployment: Docker-based Space with metadata tag `openenv`.
 - Containerized execution: validated via `docker build` and runtime health checks.
 - Documentation: includes environment motivation, task definitions, action/observation spaces, setup, usage, and baseline scoring workflow.
 
-Modes:
+Mode:
 
-- Default: uses your exported API credentials (`OPENAI_API_KEY` or `HF_TOKEN`) if present.
-- Fallback-only mode: `INTEGRATION_FORCE_FALLBACK=1 bash scripts/local_integration_check.sh`
+- Proxy mode (required for evaluation): uses `API_BASE_URL` and `API_KEY`.
 
 ### Required Submission Variables
 
 The following variables are mandatory for Round 1 evaluation:
 
-- `HF_TOKEN`
 - `API_BASE_URL`
+- `API_KEY`
 - `MODEL_NAME`
 
 For local runs, place them in `.env` (or export in shell).
