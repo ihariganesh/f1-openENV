@@ -34,6 +34,7 @@ _LLM_DISABLED = False
 _LLM_DISABLE_REASON = ""
 _LLM_ERROR_COUNT = 0
 _LLM_CALL_COUNT = 0
+SCORE_EPS = 1e-4
 
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -453,14 +454,14 @@ def run_task(http: httpx.Client, client: Optional[OpenAI], task: str, seed: int)
         state_resp = http.post(f"{ENV_BASE_URL}/state", json={})
         state_resp.raise_for_status()
         state = state_resp.json()
-        score = float(state.get("grader_score", 0.0))
-        score = max(0.0, min(1.0, score))
+        score = float(state.get("grader_score", SCORE_EPS))
+        score = max(SCORE_EPS, min(1.0 - SCORE_EPS, score))
         success = score >= 0.5
 
     except Exception as exc:
         task_error = str(exc)
         success = False
-        score = 0.0
+        score = SCORE_EPS
         print(f"[TASK_ERROR] task={task} seed={seed} error={task_error}", flush=True, file=sys.stderr)
 
     finally:

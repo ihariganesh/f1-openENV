@@ -16,6 +16,9 @@ from tasks import (
 )
 
 
+SCORE_EPS = 1e-4
+
+
 @dataclass
 class RaceState:
     task_name: str
@@ -173,7 +176,7 @@ class F1StrategyEnv:
         interim_progress_score = max(0.0, 1.0 - progress_ratio)
 
         info: Dict[str, float | int | str | bool] = {
-            "grader_score": grade.score if st.done else 0.0,
+            "grader_score": grade.score if st.done else SCORE_EPS,
             "interim_progress_score": round(interim_progress_score, 6),
             "agent_total_time": round(grade.agent_total_time, 4),
             "optimal_total_time": round(grade.optimal_total_time, 4),
@@ -218,7 +221,7 @@ class F1StrategyEnv:
             "pit_stop_count": st.pit_stop_count,
             "pit_laps": list(st.pit_laps),
             "done": st.done,
-            "grader_score": round(grade.score, 6) if st.done else 0.0,
+            "grader_score": round(grade.score, 6) if st.done else SCORE_EPS,
             "interim_progress_score": round(
                 max(
                     0.0,
