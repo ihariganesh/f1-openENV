@@ -67,7 +67,7 @@ class StepResponse(BaseModel):
 
 
 class GraderResult(BaseModel):
-    score: float = Field(ge=0.0, le=1.0)
+    score: float = Field(gt=0.0, lt=1.0)
     agent_total_time: float
     optimal_total_time: float
     tolerance_seconds: float

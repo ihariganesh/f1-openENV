@@ -5,32 +5,39 @@ from typing import Dict, List
 from .models import GraderResult
 
 
+SCORE_EPS = 1e-4
+
+
+def _open01(v: float) -> float:
+    return max(SCORE_EPS, min(1.0 - SCORE_EPS, v))
+
+
 def _norm(v: float, low: float, high: float) -> float:
     if high <= low:
-        return 0.0
+        return SCORE_EPS
     x = (v - low) / (high - low)
-    return max(0.0, min(1.0, x))
+    return _open01(x)
 
 
 def grade_easy(pit_laps: List[int], finish_position: int, total_time_loss: float) -> GraderResult:
     target_lap = 6
     if not pit_laps:
-        pit_quality = 0.0
+        pit_quality = SCORE_EPS
     else:
-        pit_quality = max(0.0, 1.0 - abs(pit_laps[0] - target_lap) / 6.0)
+        pit_quality = _open01(1.0 - abs(pit_laps[0] - target_lap) / 6.0)
     position_score = _norm(12 - finish_position, 0, 11)
     efficiency = _norm(30 - total_time_loss, 0, 30)
     score = 0.5 * pit_quality + 0.3 * position_score + 0.2 * efficiency
-    return GraderResult(score=max(0.0, min(1.0, score)), subscores={"pit_quality": pit_quality, "position": position_score, "efficiency": efficiency})
+    return GraderResult(score=_open01(score), subscores={"pit_quality": pit_quality, "position": position_score, "efficiency": efficiency})
 
 
 def grade_medium(pit_laps: List[int], safety_car_laps: List[int], finish_position: int, total_time_loss: float) -> GraderResult:
     sc_window = set(safety_car_laps)
-    sc_pit = 1.0 if any(l in sc_window for l in pit_laps) else 0.0
+    sc_pit = 1.0 - SCORE_EPS if any(l in sc_window for l in pit_laps) else SCORE_EPS
     position_score = _norm(14 - finish_position, 0, 13)
     efficiency = _norm(35 - total_time_loss, 0, 35)
     score = 0.45 * sc_pit + 0.35 * position_score + 0.2 * efficiency
-    return GraderResult(score=max(0.0, min(1.0, score)), subscores={"safety_car_call": sc_pit, "position": position_score, "efficiency": efficiency})
+    return GraderResult(score=_open01(score), subscores={"safety_car_call": sc_pit, "position": position_score, "efficiency": efficiency})
 
 
 def grade_hard(
@@ -40,12 +47,12 @@ def grade_hard(
     finish_position: int,
     total_time_loss: float,
 ) -> GraderResult:
-    multi_stop = 1.0 if len(pit_laps) >= 2 else 0.0
-    rain_adapt = 1.0 if wet_compound_pits >= 1 and any(l >= rain_start_lap for l in pit_laps) else 0.0
+    multi_stop = 1.0 - SCORE_EPS if len(pit_laps) >= 2 else SCORE_EPS
+    rain_adapt = 1.0 - SCORE_EPS if wet_compound_pits >= 1 and any(l >= rain_start_lap for l in pit_laps) else SCORE_EPS
     position_score = _norm(16 - finish_position, 0, 15)
     efficiency = _norm(45 - total_time_loss, 0, 45)
     score = 0.25 * multi_stop + 0.35 * rain_adapt + 0.25 * position_score + 0.15 * efficiency
-    return GraderResult(score=max(0.0, min(1.0, score)), subscores={"multi_stop": multi_stop, "rain_adapt": rain_adapt, "position": position_score, "efficiency": efficiency})
+    return GraderResult(score=_open01(score), subscores={"multi_stop": multi_stop, "rain_adapt": rain_adapt, "position": position_score, "efficiency": efficiency})
 
 
 def grade_task(task_name: str, metrics: Dict[str, object]) -> GraderResult:
