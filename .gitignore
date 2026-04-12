@@ -1,0 +1,17 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Test/cache tooling
+.pytest_cache/
+
+# Local accidental media/export folders
+WhatsApp Unknown */
+
+# Local ad-hoc generated reports
+artifacts/expert_final_report.json
+artifacts/expert_final_scores.json
+artifacts/human_eval_rerun_report_*.md
+
+# Local manual notes/exports
+f1_human_eval_testing_guide.html

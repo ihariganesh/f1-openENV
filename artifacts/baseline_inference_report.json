@@ -2,32 +2,37 @@
   "benchmark": "race_strategy_optimizer",
   "model": "Qwen/Qwen2.5-72B-Instruct",
   "api_base_url": "https://router.huggingface.co/v1",
-  "env_base_url": "http://127.0.0.1:7860",
+  "env_base_url": "https://ihariganesh-f1-race-stratergy.hf.space",
   "seeds": [
     7
   ],
   "episodes": [
     {
-      "task": "f1-sprint-dry",
+      "task": "easy-one-stop",
       "seed": 7,
-      "score": 0.0001
+      "score": 1.0
     },
     {
-      "task": "f1-feature-safetycar",
+      "task": "medium-strategy",
       "seed": 7,
-      "score": 0.0001
+      "score": 0.0
     },
     {
-      "task": "f1-chaos-weather",
+      "task": "hard-safety-car",
       "seed": 7,
-      "score": 0.0001
+      "score": 0.0
+    },
+    {
+      "task": "ultra-chaos",
+      "seed": 7,
+      "score": 0.0
     }
   ],
   "task_average_scores": {
-    "f1-sprint-dry": 0.0001,
-    "f1-feature-safetycar": 0.0001,
-    "f1-chaos-weather": 0.0001
+    "easy-one-stop": 1.0,
+    "medium-strategy": 0.0,
+    "hard-safety-car": 0.0,
+    "ultra-chaos": 0.0
   },
-  "final_average_score": 0.0001,
-  "interrupted": false
+  "final_average_score": 0.25
 }
