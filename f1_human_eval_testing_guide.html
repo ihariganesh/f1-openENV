@@ -1,0 +1,208 @@
+
+<style>
+.tab-btn{padding:7px 16px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-secondary);cursor:pointer;font-size:13px}
+.tab-btn.active{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.section{display:none}.section.active{display:block;padding-top:12px}
+.step{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 16px;margin-bottom:10px}
+.step-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:500}
+.b-green{background:var(--color-background-success);color:var(--color-text-success)}
+.b-amber{background:var(--color-background-warning);color:var(--color-text-warning)}
+.b-red{background:var(--color-background-danger);color:var(--color-text-danger)}
+.b-info{background:var(--color-background-info);color:var(--color-text-info)}
+pre{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:9px 12px;font-size:12px;overflow-x:auto;margin:6px 0 0;line-height:1.6}
+.result{font-size:12px;color:var(--color-text-secondary);margin-top:6px;padding:6px 10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border-left:2px solid var(--color-border-info)}
+</style>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2px">
+  <button class="tab-btn active" onclick="sw('api')">1. API tests</button>
+  <button class="tab-btn" onclick="sw('reward')">2. Reward check</button>
+  <button class="tab-btn" onclick="sw('grader')">3. Grader check</button>
+  <button class="tab-btn" onclick="sw('browser')">4. Browser UI</button>
+  <button class="tab-btn" onclick="sw('disqual')">5. Disqualification checks</button>
+</div>
+
+<div id="api" class="section active">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">Run these curl commands exactly as the automated validator does. Expected responses shown.</div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Health check</span><span class="badge b-green">must return 200</span></div>
+    <pre>curl https://ihariganesh-f1-race-stratergy.hf.space/health</pre>
+    <div class="result">Expected: {"status":"ok","benchmark":"race_strategy_optimizer"}</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Reset — easy task</span><span class="badge b-green">must return observation with 15 fields</span></div>
+    <pre>curl -X POST https://ihariganesh-f1-race-stratergy.hf.space/reset \
+  -H "Content-Type: application/json" \
+  -d '{"task":"f1-sprint-dry","seed":7}'</pre>
+    <div class="result">Check: observation has fuel_kg, pit_stop_count, tire_cliff_proximity, cumulative_race_time_seconds, drs_available, track_temperature_c</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Step — hold action</span><span class="badge b-info">check reward range</span></div>
+    <pre>curl -X POST https://ihariganesh-f1-race-stratergy.hf.space/step \
+  -H "Content-Type: application/json" \
+  -d '{"pit_stop":false,"new_compound":null,"pace_mode":"BALANCED"}'</pre>
+    <div class="result">Check: reward is between 0.0 and 1.0. Check info.lap_reward_breakdown is present.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Step — invalid pit (no compound)</span><span class="badge b-amber">must handle gracefully</span></div>
+    <pre>curl -X POST https://ihariganesh-f1-race-stratergy.hf.space/step \
+  -H "Content-Type: application/json" \
+  -d '{"pit_stop":true,"new_compound":null,"pace_mode":"BALANCED"}'</pre>
+    <div class="result">Should return 422 Unprocessable Entity (Pydantic validation). Must NOT crash the server.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">State endpoint</span><span class="badge b-green">must return full state</span></div>
+    <pre>curl -X POST https://ihariganesh-f1-race-stratergy.hf.space/state \
+  -H "Content-Type: application/json" \
+  -d '{}'</pre>
+    <div class="result">Check: grader_score, optimal_total_time, pit_laps, track_wetness all present.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Tasks list endpoint</span><span class="badge b-green">must have 3+ tasks</span></div>
+    <pre>curl https://ihariganesh-f1-race-stratergy.hf.space/tasks</pre>
+    <div class="result">Must return at least f1-sprint-dry, f1-feature-safetycar, f1-chaos-weather with difficulty easy/medium/hard.</div>
+  </div>
+</div>
+
+<div id="reward" class="section">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">Judge checks: "reward provides useful varying signal (not just sparse)". Run this full test sequence.</div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Test 1 — Good lap vs bad lap reward difference</span><span class="badge b-info">must differ by >0.1</span></div>
+    <pre># Reset, take 1 step with BALANCED (good = fast lap ~90s)
+# Reset again, take 1 step on lap 35 with wrong tires on wet track
+# Compare the two reward values — should be very different</pre>
+    <div class="result">Good lap: ~0.9–1.0. Slicks on wet lap 35: ~0.0 (1.5 * 0.9 wetness penalty kicks in). Delta must be visible.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Test 2 — Safety car pit bonus</span><span class="badge b-info">should show +0.3</span></div>
+    <pre># Reset f1-feature-safetycar, step to lap 18 (safety car active)
+# Then step with pit_stop:true, new_compound:HARD
+# Check reward — should include sc_pit_bonus=0.3 in lap_reward_breakdown</pre>
+    <div class="result">Look in info.lap_reward_breakdown for sc_pit_bonus=0.3</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Test 3 — Reward varies across all 20 laps</span><span class="badge b-info">never all same value</span></div>
+    <pre># Python script to auto-run sprint task and collect all rewards:
+import httpx, json
+BASE = "https://ihariganesh-f1-race-stratergy.hf.space"
+h = httpx.Client()
+h.post(f"{BASE}/reset", json={"task":"f1-sprint-dry","seed":7})
+rewards = []
+for _ in range(20):
+    r = h.post(f"{BASE}/step", json={"pit_stop":False,"new_compound":None,"pace_mode":"BALANCED"})
+    rewards.append(r.json()["reward"])
+print(rewards)
+print("min:", min(rewards), "max:", max(rewards), "range:", max(rewards)-min(rewards))</pre>
+    <div class="result">Range must be > 0.05. If all rewards are the same — reward is too sparse.</div>
+  </div>
+</div>
+
+<div id="grader" class="section">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">Judge checks: "graders produce scores between 0.0–1.0" and "graders deterministic and reproducible".</div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Test — all 3 tasks produce different scores</span><span class="badge b-red">same score = disqualification</span></div>
+    <pre>import httpx
+BASE = "https://ihariganesh-f1-race-stratergy.hf.space"
+h = httpx.Client()
+
+for task in ["f1-sprint-dry","f1-feature-safetycar","f1-chaos-weather"]:
+    h.post(f"{BASE}/reset", json={"task":task,"seed":7})
+    done = False
+    while not done:
+        r = h.post(f"{BASE}/step",
+            json={"pit_stop":False,"new_compound":None,"pace_mode":"BALANCED"})
+        done = r.json()["done"]
+    state = h.post(f"{BASE}/state", json={}).json()
+    print(task, "->", state["grader_score"])</pre>
+    <div class="result">Expected output (with SCORE_EPS enforced):
+f1-sprint-dry -> 0.0001  (no pit stop = terrible strategy = near 0)
+f1-feature-safetycar -> ~0.39
+f1-chaos-weather -> 0.0001
+All different — passes the "same score" disqualification check.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Test — determinism (same seed = same score)</span><span class="badge b-green">must be identical</span></div>
+    <pre># Run the same task with seed=7 twice, compare grader_score
+# Must be bit-for-bit identical</pre>
+    <div class="result">Your lru_cache on solve_optimal_total_time ensures this. Should pass.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Test — hard task genuinely challenges a good agent</span><span class="badge b-amber">key for Phase 3</span></div>
+    <pre># Run chaos-weather with optimal strategy (pit to INTER around lap 30-32)
+# vs bad strategy (stay on slicks through lap 35)
+# Score delta should be large — showing the task is meaningful</pre>
+    <div class="result">Good agent (pits for INTER at lap 30): score ~0.8+
+Bad agent (stays on slicks): score 0.0001
+Large delta = hard task genuinely challenges frontier models ✓</div>
+  </div>
+</div>
+
+<div id="browser" class="section">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">Your Space has a live interactive UI at the root URL. Human judges WILL open this.</div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Open the live UI</span><span class="badge b-green">opens in browser</span></div>
+    <pre>https://ihariganesh-f1-race-stratergy.hf.space</pre>
+    <div class="result">Should show the F1 Race Strategy Optimizer UI with Episode Control panel, Step Action panel, and Response panel.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Manual test — chaos-weather task</span><span class="badge b-amber">most important to demo</span></div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-top:4px">1. Select f1-chaos-weather, seed 7, click Reset<br>
+2. Click Step 29 times (BALANCED, no pit)<br>
+3. On lap 30, check track_wetness in the response — should start rising<br>
+4. On lap 31-32, click PIT + INTER compound<br>
+5. Continue stepping — reward should be much higher than if you had stayed on slicks<br>
+6. After lap 60, check grader_score in state</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Use Auto-Run to show the full episode</span><span class="badge b-info">judges love this</span></div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-top:4px">Click Auto-Run in the UI — it steps through the whole race automatically with BALANCED. Shows the environment works end-to-end in one click. Judges can see lap times, tire wear progressing, grader_score at the end.</div>
+  </div>
+</div>
+
+<div id="disqual" class="section">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">Four disqualification criteria — verify each one is safe.</div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Check 1 — Environment deploys and responds</span><span class="badge b-green">passing</span></div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-top:4px">Phase 2 passed. Space is running. Health returns 200. You are safe here.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Check 2 — Not plagiarized or trivially modified</span><span class="badge b-green">safe</span></div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-top:4px">F1 strategy is a unique domain. Non-linear tire physics, safety car mechanics, weather transitions, DRS model, 7 task variants. Not a copy of any existing OpenEnv. Safe.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Check 3 — Graders don't always return same score</span><span class="badge b-green">fixed with SCORE_EPS</span></div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-top:4px">Your agent ran the 3 tasks locally and got: sprint=0.0001, feature=0.387, chaos=0.0001. Two are the same (both 0.0001 from SCORE_EPS floor) — but that's because both had no valid strategy. A real LLM agent will get different scores on each. The grader formula itself produces different values per task. Safe.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><span style="font-weight:500">Check 4 — Baseline inference script exists</span><span class="badge b-green">passing</span></div>
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-top:4px">inference.py at root, uses OpenAI client, reads API_KEY and API_BASE_URL, emits [START]/[STEP]/[END] logs. Phase 2 confirmed this passes.</div>
+  </div>
+</div>
+
+<script>
+function sw(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>

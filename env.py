@@ -175,7 +175,7 @@ class F1StrategyEnv:
         progress_ratio = min(1.0, max(0.0, st.cumulative_race_time_seconds / max(1e-6, grade.optimal_total_time)))
         interim_progress_score = max(0.0, 1.0 - progress_ratio)
 
-        info: Dict[str, float | int | str | bool] = {
+        info: Dict[str, float | int | str | bool | Dict[str, float | int | str | bool]] = {
             "grader_score": grade.score if st.done else SCORE_EPS,
             "interim_progress_score": round(interim_progress_score, 6),
             "agent_total_time": round(grade.agent_total_time, 4),
@@ -186,11 +186,20 @@ class F1StrategyEnv:
             "wrong_tire": wrong_tire_flag,
             "fuel_critical": fuel_critical,
             "pit_stop_count": st.pit_stop_count,
-            "lap_reward_breakdown": (
-                f"time={round(time_reward, 3)},sc_pit_bonus={round(sc_pit_bonus, 3)},"
-                f"wrong_tire_penalty={round(wrong_tire_penalty, 3)},puncture_penalty={round(puncture_penalty, 3)},"
-                f"raw={round(reward_value_raw, 3)},clipped={round(reward_value, 3)}"
-            ),
+            "lap_reward_breakdown": {
+                "time": round(time_reward, 3),
+                "sc_pit_bonus": round(sc_pit_bonus, 3),
+                "wrong_tire_penalty": round(wrong_tire_penalty, 3),
+                "puncture_penalty": round(puncture_penalty, 3),
+                "raw": round(reward_value_raw, 3),
+                "clipped": round(reward_value, 3),
+            },
+            "reward_time": round(time_reward, 3),
+            "reward_sc_bonus": round(sc_pit_bonus, 3),
+            "reward_wrong_tire": round(wrong_tire_penalty, 3),
+            "reward_puncture": round(puncture_penalty, 3),
+            "reward_raw": round(reward_value_raw, 3),
+            "reward_clipped": round(reward_value, 3),
         }
 
         return StepResponse(observation=self._observation(), reward=reward_model.value, done=st.done, info=info)
@@ -251,7 +260,7 @@ class F1StrategyEnv:
             last_lap_time_seconds=round(st.last_lap_time_seconds, 4),
             cumulative_race_time_seconds=round(st.cumulative_race_time_seconds, 4),
             pit_stop_count=st.pit_stop_count,
-            drs_available=False,
-            track_temperature_c=35.0,
-            tire_cliff_proximity=round(min(1.0, st.tire_wear_percentage / 0.85), 4),
+            drs_available=is_drs_available(st.task_name, lap_for_weather),
+            track_temperature_c=track_temperature(st.task_name, lap_for_weather),
+            tire_cliff_proximity=tire_cliff_proximity(st.current_tire_compound, st.tire_age_laps),
         )

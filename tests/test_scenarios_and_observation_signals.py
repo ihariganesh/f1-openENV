@@ -23,9 +23,15 @@ def test_observation_dynamic_signals_change_in_weather_task() -> None:
     env = F1StrategyEnv()
     env.reset(task_name="f1-chaos-weather", seed=7)
 
+    # Step 1: Baseline at start (dry)
     first_obs = env.step(ActionSpace(pit_stop=False, new_compound=None, pace_mode="BALANCED")).observation
+    
+    # Fast-forward to lap 35 (when rain is full)
+    # Task definition: rain starts lap 30, ramp 5 laps -> full wetness at lap 35
     for _ in range(34):
         obs = env.step(ActionSpace(pit_stop=False, new_compound=None, pace_mode="BALANCED")).observation
 
-    assert obs.track_wetness >= first_obs.track_wetness
-    assert obs.track_temperature_c <= first_obs.track_temperature_c
+    assert obs.track_wetness > 0.8
+    assert obs.track_temperature_c < first_obs.track_temperature_c
+    assert obs.track_temperature_c < 25.0  # Should be around 22.0 based on logic
+    assert obs.drs_available is False  # Disabled in wet

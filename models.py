@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field, model_validator
 
 TireCompound = Literal["SOFT", "MEDIUM", "HARD", "INTER", "WET"]
 PaceMode = Literal["PUSH", "BALANCED", "CONSERVE"]
+InfoScalar = float | int | str | bool
+InfoValue = InfoScalar | Dict[str, InfoScalar]
 
 
 class ObservationSpace(BaseModel):
@@ -56,14 +58,14 @@ class ResetResponse(BaseModel):
     observation: ObservationSpace
     reward: float = 0.0
     done: bool = False
-    info: Dict[str, float | int | str | bool] = Field(default_factory=dict)
+    info: Dict[str, InfoValue] = Field(default_factory=dict)
 
 
 class StepResponse(BaseModel):
     observation: ObservationSpace
     reward: float
     done: bool
-    info: Dict[str, float | int | str | bool] = Field(default_factory=dict)
+    info: Dict[str, InfoValue] = Field(default_factory=dict)
 
 
 class GraderResult(BaseModel):
@@ -71,7 +73,7 @@ class GraderResult(BaseModel):
     agent_total_time: float
     optimal_total_time: float
     tolerance_seconds: float
-    details: Dict[str, float | int | str | bool] = Field(default_factory=dict)
+    details: Dict[str, InfoValue] = Field(default_factory=dict)
 
 
 class TaskSpec(BaseModel):

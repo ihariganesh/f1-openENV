@@ -1,8 +1,8 @@
 {
   "benchmark": "race_strategy_optimizer",
   "model": "Qwen/Qwen2.5-72B-Instruct",
-  "api_base_url": "https://router.huggingface.co/v1",
-  "env_base_url": "http://127.0.0.1:7860",
+  "api_base_url": null,
+  "env_base_url": "http://localhost:8000",
   "seeds": [
     7
   ],
