@@ -363,6 +363,7 @@ def choose_action(client: Optional[OpenAI], obs: dict) -> Tuple[str, str]:
 
     if client is None:
         raise RuntimeError("OpenAI client is required. Ensure API_BASE_URL and API_KEY are set by evaluator.")
+
     if _LLM_DISABLED:
         raise RuntimeError(f"LLM disabled due to repeated failures: {_LLM_DISABLE_REASON}")
 
@@ -476,6 +477,7 @@ def main() -> None:
         raise RuntimeError("API_BASE_URL is required")
     if not API_KEY:
         raise RuntimeError("API_KEY is required")
+    
     if not TASKS:
         raise RuntimeError("INFERENCE_TASKS resolved to empty list; cannot run evaluation")
 
@@ -527,6 +529,7 @@ def main() -> None:
         report_file.parent.mkdir(parents=True, exist_ok=True)
         report_file.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(f"BASELINE_REPORT={report_file}", flush=True, file=sys.stderr)
+        
         if _LLM_CALL_COUNT <= 0:
             raise RuntimeError("No LLM proxy calls were made during inference run")
     finally:
