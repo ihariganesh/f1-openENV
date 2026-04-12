@@ -8,6 +8,45 @@ from pathlib import Path
 from huggingface_hub import HfApi, upload_folder
 
 
+# Keep Space uploads minimal and evaluator-focused.
+ALLOW_PATTERNS = [
+    "Dockerfile",
+    "README.md",
+    "pyproject.toml",
+    "openenv.yaml",
+    "env.py",
+    "models.py",
+    "tasks.py",
+    "inference.py",
+    "validate-submission.sh",
+    "app/**",
+    "scripts/**",
+    "src/**",
+    "tests/**",
+]
+
+IGNORE_PATTERNS = [
+    ".git/**",
+    ".venv/**",
+    ".vscode/**",
+    ".pytest_cache/**",
+    "__pycache__/**",
+    "**/__pycache__/**",
+    "*.pyc",
+    "*.pyo",
+    "*.egg-info/**",
+    "artifacts/**",
+    "*.ipynb",
+    "*.jpg",
+    "*.jpeg",
+    "*.png",
+    "*.webp",
+    "*.gif",
+    "*.mp4",
+    "*.zip",
+]
+
+
 def main() -> int:
     token = os.getenv("HF_TOKEN")
     space_id = os.getenv("HF_SPACE_ID")
@@ -28,15 +67,8 @@ def main() -> int:
         repo_type="space",
         folder_path=str(repo_dir),
         token=token,
-        ignore_patterns=[
-            ".venv/*",
-            ".vscode/*",
-            "__pycache__/*",
-            ".pytest_cache/*",
-            "*.pyc",
-            "*.pyo",
-            "*.egg-info/*",
-        ],
+        allow_patterns=ALLOW_PATTERNS,
+        ignore_patterns=IGNORE_PATTERNS,
     )
 
     print(f"Deployed to: https://{space_id.replace('/', '-')}.hf.space")
