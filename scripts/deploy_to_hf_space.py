@@ -18,6 +18,7 @@ ALLOW_PATTERNS = [
     "models.py",
     "tasks.py",
     "inference.py",
+    "abu_dhabi_sim.py",
     "validate-submission.sh",
     "app/**",
     "scripts/**",

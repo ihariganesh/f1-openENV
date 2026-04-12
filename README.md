@@ -211,6 +211,32 @@ Latest generated result (`artifacts/baseline_inference_report_3tasks.json`):
 | `f1-chaos-weather` | `1.000000` |
 | **Final average** | **`0.979803`** |
 
+### Abu Dhabi 2021 Simulation (Real Telemetry Replay)
+
+`abu_dhabi_sim.py` replays Lewis Hamilton's 2021 Abu Dhabi GP race laps using
+FastF1 telemetry and compares strategy decisions against Mercedes.
+
+What it does:
+
+- loads real lap-by-lap telemetry via FastF1,
+- feeds race context into the strategy decision loop,
+- compares agent calls vs real Mercedes calls,
+- highlights the championship-critical safety-car window.
+
+Example run summary (from local replay):
+
+- finish time: `5335.247s`
+- pit stops: `2`
+- grader score: `0.9999`
+- key moment: safety-car pit call selected (championship-winning strategy logic)
+
+Run it locally:
+
+```bash
+pip install fastf1
+python abu_dhabi_sim.py
+```
+
 The inference runner uses the OpenAI Python client and reads credentials from `API_BASE_URL` and `API_KEY`.
 For hackathon evaluation, this is required so calls are observed on the provided LiteLLM proxy key.
 
